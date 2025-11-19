@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from collections import defaultdict
-from typing import Callable, Generic, Mapping, Sequence, TypeVar
+from collections import Counter, defaultdict
+from dataclasses import dataclass
+from typing import Callable, Generic, Iterable, Iterator, Mapping, Sequence, TypeVar
 
 import numpy as np
 
@@ -130,12 +131,12 @@ class FiniteDistribution(Distribution[A], ABC):
         pass
 
     def probability(self, outcome: A) -> float:
-        return self.table().get(outcome, 0)
+        return self.table().get(outcome, 0.0)
 
     def map(self, f: Callable[[A], B]) -> FiniteDistribution[B]:
         result: dict[B, float] = defaultdict(float)
 
-        for outcome, probability in self.table:
+        for outcome, probability in self:
             result[f(outcome)] += probability
 
         return Categorical(result)
@@ -147,4 +148,106 @@ class FiniteDistribution(Distribution[A], ABC):
         return np.random.choice(outcomes, weights=weights)[0]
 
     def expectation(self, f: Callable[[A], float]) -> float:
-        return sum(prob * f(outcome) for outcome, prob in self.table())
+        return sum(prob * f(outcome) for outcome, prob in self)
+
+    def __iter__(self) -> Iterator[tuple[A, float]]:
+        return iter(self.table().items())
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, FiniteDistribution):
+            return self.table() == other.table()
+
+        return False
+
+    def __repr__(self) -> str:
+        return repr(self.table())
+
+
+@dataclass(frozen=True)
+class Constant(FiniteDistribution[A]):
+    value: A
+
+    def sample(self) -> A:
+        return self.value
+
+    def table(self) -> Mapping[A, float]:
+        return {self.value: 1}
+
+    def probability(self, outcome: A) -> float:
+        return 1.0 if outcome == self.value else 0.0
+
+
+@dataclass(frozen=True)
+class Bernoulli(FiniteDistribution[bool]):
+    p: float
+
+    def sample(self) -> bool:
+        return np.random.uniform(0, 1) <= self.p
+
+    def table(self) -> Mapping[bool, float]:
+        return {True: self.p, False: 1 - self.p}
+
+    def probability(self, outcome: bool) -> float:
+        return self.p if outcome else 1 - self.p
+
+
+@dataclass(frozen=True)
+class Range(FiniteDistribution[int]):
+    low: int
+    high: int
+
+    def __init__(self, a: int, b: int | None) -> None:
+        if b is None:
+            a, b = 0, a
+
+        assert b > a
+
+        self.low = a
+        self.high = b
+
+    def sample(self) -> int:
+        return np.random.randint(low=self.low, high=self.high - 1)
+
+    def table(self) -> Mapping[int, float]:
+        length = self.high - self.low
+        return {x: 1.0 / length for x in range(self.low, self.high)}
+
+
+class Choose(FiniteDistribution[A]):
+    options: Sequence[A]
+    _table: Mapping[A, float] | None = None
+
+    def __init__(self, options: Iterable[A]):
+        self.options = list(options)
+
+    def sample(self) -> A:
+        return np.random.choice(self.options)
+
+    def table(self) -> Mapping[A, float]:
+        if self._table is None:
+            counter = Counter(self.options)
+            length = len(self.options)
+            self._table = {x: counter[x] / length for x in counter}
+
+        return self._table
+
+    def probability(self, outcome: A) -> float:
+        return self.table().get(outcome, 0.0)
+
+
+class Categorical(FiniteDistribution[A]):
+    probabilities: Mapping[A, float]
+
+    def __init__(self, distribution: Mapping[A, float]):
+        total = sum(distribution.values())
+
+        self.probabilities = {
+            outcome: probability / total
+            for outcome, probability in distribution.items()
+        }
+
+    def table(self) -> Mapping[A, float]:
+        return self.probabilities
+
+    def probability(self, outcome: A) -> float:
+        return self.probabilities.get(outcome, 0.0)
