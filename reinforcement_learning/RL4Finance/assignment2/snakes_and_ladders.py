@@ -11,20 +11,48 @@ sys.path.append(
     )
 )
 
+import random
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, Set
 
-import numpy as np
+import matplotlib.pyplot as plt
+from loguru import logger
 
-from rl.distributions import Categorical, FiniteDistribution
-from rl.markov_process import FiniteMarkovProcess
+from rl.distributions import Categorical, Constant, FiniteDistribution
+from rl.markov_process import FiniteMarkovProcess, NonTerminal
 
 
 @dataclass(frozen=True)
 class State:
+    """
+    Represents the state of the player on the Snakes and Ladders board.
+
+    The state is defined solely by the player's position. It is frozen
+    to ensure immutability, which is necessary when using it as a key
+    in a dictionary (e.g., in the transition map).
+
+    Attributes:
+        position: The square number the player is currently on (1 to num_squares).
+    """
+
     position: int
 
 
 class SnakesAndLadders(FiniteMarkovProcess[State]):
+    """
+    Models the game of Snakes and Ladders as a Finite Markov Process (FMP).
+
+    The game state is the player's position on the board. The process
+    is defined by the transition probabilities after a single die roll.
+
+    Attributes:
+        num_rolls (int): The maximum value of the die (e.g., 6 for a standard die).
+        num_squares (int): The total number of squares on the board (e.g., 100).
+        snakes (dict[int, int]): Mapping of snake heads (source) to tails (destination).
+        ladders (dict[int, int]): Mapping of ladder bases (source) to tops (destination).
+    """
+
     num_rolls: int
     num_squares: int
     snakes: dict[int, int]
@@ -45,6 +73,21 @@ class SnakesAndLadders(FiniteMarkovProcess[State]):
         super().__init__(transition_map=self.compute_transitions())
 
     def compute_transitions(self) -> dict[State, FiniteDistribution[State]]:
+        """
+        Computes the transition probabilities for all non-terminal states.
+
+        The transition map links a current State to a distribution over
+        possible next States after one die roll.
+
+        A state is considered terminal (and skipped) if:
+        1. It is the end square (num_squares).
+        2. It is the head of a snake or the base of a ladder, as the player
+           immediately moves from there to the destination.
+
+        Returns:
+            A dictionary where keys are non-terminal State objects and values
+            are Categorical distributions over the possible next State objects.
+        """
         transitions: dict[State, FiniteDistribution[State]] = {}
 
         for current_position in range(1, self.num_squares + 1):
@@ -81,37 +124,140 @@ class SnakesAndLadders(FiniteMarkovProcess[State]):
         return transitions
 
 
-def generate_snake_connections(n_snakes: int, n_squares: int) -> int:
-    snakes = {}
+def generate_connections(
+    num_squares: int,
+    num_connections: int,
+    is_snakes: bool,
+) -> Dict[int, int]:
+    """
+    Generates a dictionary of unique connections (snakes or ladders) for a
+    Snakes and Ladders board.
 
-    while len(snakes) < n_snakes:
-        source = np.random.choice(range(2, n_squares))
-        if (
-            source.item() not in snakes.keys()
-            and source.item() not in snakes.values()
-            and source.item() != 2
-        ):
-            destination = np.random.choice(range(1, source.item()))
+    A valid connection is a pair (source, destination) where:
+    1. The source and destination are not the start (1) or end (num_squares)
+       of the board.
+    2. The source is not already a destination for another connection, and
+       the destination is not already a source for another connection.
+    3. The source and destination are not the same.
+    4. For **snakes**, source > destination (downward movement).
+    5. For **ladders**, source < destination (upward movement).
 
-            if source.item() != destination.item():
-                snakes[source.item()] = destination.item()
+    Args:
+        num_squares: The total number of squares on the board (e.g., 100).
+        num_connections: The desired number of connections to generate.
+        is_snakes: If True, generates snakes (source > dest).
+                   If False, generates ladders (source < dest).
 
-    print("===== SNAKES =====")
-    for s, d in snakes.items():
-        print(f"{s} ---> {d}")
-    print()
+    Returns:
+        A dictionary mapping the connection source square (int)
+        to the destination square (int).
+    """
 
-    return snakes
+    # Square 1 (start) and num_squares (end) cannot be sources or destinations.
+    valid_squares = set(range(2, num_squares))
+
+    connections: Dict[int, int] = {}
+    sources: Set[int] = set()
+    destinations: Set[int] = set()
+
+    # Determine the connection type for clear logic
+    connection_type = "snake" if is_snakes else "ladder"
+
+    # We must have at least 2 squares available to make a connection
+    if len(valid_squares) < 2:
+        return {}
+
+    # The maximum possible number of non-overlapping connections is half the
+    # number of available squares, as each uses two squares.
+    max_possible = len(valid_squares) // 2
+    num_connections = min(num_connections, max_possible)
+
+    while len(connections) < num_connections:
+        # Choose a random source square from those not already used
+        available_sources = list(valid_squares - sources - destinations)
+
+        if not available_sources:
+            # Cannot find any more valid sources, stop the loop.
+            logger.warning(
+                f"Warning: Could only generate {len(connections)} "
+                f"{connection_type}s out of requested {num_connections} due to square conflicts."
+            )
+            break
+
+        source = random.choice(available_sources)
+
+        # Determine the valid range for the destination based on the connection type
+        if is_snakes:
+            # Destination must be in the range [2, source - 1]
+            # Must be > 1 (not the start) and less than source.
+            dest_range = range(2, source)
+        else:
+            # Destination must be in the range [source + 1, num_squares - 1]
+            # Must be > source and less than the end square.
+            dest_range = range(source + 1, num_squares)
+
+        # Filter the destination range to exclude squares already used as a source or destination
+        valid_destinations = list(set(dest_range) - sources - destinations)
+
+        if valid_destinations:
+            destination = random.choice(valid_destinations)
+
+            # Add the new, valid connection
+            connections[source] = destination
+            sources.add(source)
+            destinations.add(destination)
+
+        # If no valid destination is found for the chosen source, the loop continues
+        # to pick a new source.
+
+    return connections
+
+
+def generate_snake_connections(n_snakes: int, n_squares: int) -> Dict[int, int]:
+    """
+    Generates a dictionary of unique snake connections for the board.
+
+    Args:
+        n_snakes: The desired number of snake connections.
+        n_squares: The total number of squares on the board.
+
+    Returns:
+        A dictionary mapping the snake's head (source) to its tail (destination).
+    """
+    return generate_connections(
+        num_squares=n_squares,
+        num_connections=n_snakes,
+        is_snakes=True,
+    )
+
+
+def generate_ladder_connections(n_ladders: int, n_squares: int) -> Dict[int, int]:
+    """
+    Generates a dictionary of unique ladder connections for the board.
+
+    Args:
+        n_ladders: The desired number of ladder connections.
+        n_squares: The total number of squares on the board.
+
+    Returns:
+        A dictionary mapping the ladder's base (source) to its top (destination).
+    """
+    return generate_connections(
+        num_squares=n_squares,
+        num_connections=n_ladders,
+        is_snakes=False,
+    )
 
 
 if __name__ == "__main__":
     ROLLS = 6
     SQUARES = 100
-    N_LADDERS = 3
-    N_SNAKES = 15
+    N_LADDERS = 13
+    N_SNAKES = 12
 
+    # generate random snake/ladder connections for the game
     snakes = generate_snake_connections(n_snakes=N_SNAKES, n_squares=SQUARES)
-    ladders = {}
+    ladders = generate_ladder_connections(n_ladders=N_LADDERS, n_squares=SQUARES)
 
     game = SnakesAndLadders(
         ladders=ladders,
@@ -120,9 +266,42 @@ if __name__ == "__main__":
         num_squares=SQUARES,
     )
 
+    # # print the transition probabilities (for debugging purposes)
+    # # set SQUARES to a small number
     # print(game)
 
-    # stationary_distribution = game.compute_stationary_distribution()
+    # to find the distribution of "time" (as measured by the number of
+    # rolls of the dice) to finish the game, we generate 1000 sampling
+    # traces and then count the length of each trace (as it terminates)
+    # on a TerminalState. Use this list of times to generate the histogram.
+    traces = [
+        sum(
+            1
+            for _ in game.simulate(
+                start_state_distribution=Constant(NonTerminal(State(position=1)))
+            )
+        )
+        for _ in range(1_000)
+    ]
 
-    # for state, prob in stationary_distribution:
-    #     print(f"{state=}: {prob=:.3f}")
+    os.makedirs(Path(__file__).parent / "images", exist_ok=True)
+
+    plt.hist(traces)
+
+    plt.title("Histogram of rolls for finishing Snakes and Ladders")
+    plt.xlabel("Number of dice rolls")
+    plt.ylabel("Frequency")
+    plt.tight_layout()
+
+    plt.savefig(
+        Path(__file__).parent / "images" / "time_to_finish_snakes_and_ladders.png"
+    )
+
+    plt.close()
+
+    # in order to find the stationary distribution, use
+    # the method developed in FiniteMarkovProcess class
+    stationary_distribution = game.compute_stationary_distribution()
+
+    for state, prob in stationary_distribution:
+        print(f"{state=}: {prob=:.3f}")
