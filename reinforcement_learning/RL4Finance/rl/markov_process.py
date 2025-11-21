@@ -4,7 +4,12 @@ from typing import Callable, Generic, Iterable, Mapping, Sequence, Set, TypeVar
 
 import numpy as np
 
-from rl.distributions import Categorical, Distribution, FiniteDistribution
+from rl.distributions import (
+    Categorical,
+    Distribution,
+    FiniteDistribution,
+    SampledDistribution,
+)
 
 S = TypeVar("S")
 X = TypeVar("X")
@@ -113,3 +118,44 @@ class FiniteMarkovProcess(MarkovProcess[S]):
                 for i, prob in enumerate(unit_eigenvector)
             }
         )
+
+
+@dataclass(frozen=True)
+class TransitionStep(Generic[S]):
+    state: NonTerminal[S]
+    next_state: State[S]
+    reward: float
+
+
+class MarkovRewardProcess(MarkovProcess[S]):
+    @abstractmethod
+    def transition_reward(
+        self,
+        state: NonTerminal[S],
+    ) -> Distribution[tuple[State[S], float]]:
+        pass
+
+    def transition(self, state: NonTerminal[S]) -> Distribution[State[S]]:
+        distribution = self.transition_reward(state=state)
+
+        def sample_next_state(
+            distribution: Distribution[tuple[State[S], float]] = distribution,
+        ):
+            next_state, _ = distribution.sample()
+            return next_state
+
+        return SampledDistribution(sampler=sample_next_state)
+
+    def simulate_reward(
+        self,
+        start_state_distribution: Distribution[NonTerminal[S]],
+    ) -> Iterable[TransitionStep[S]]:
+        state: State[S] = start_state_distribution.sample()
+        reward: float = 0.0
+
+        while isinstance(state, NonTerminal):
+            next_distribution = self.transition_reward(state=state)
+            next_state, reward = next_distribution.sample()
+
+            yield TransitionStep(state=state, next_state=next_state, reward=reward)
+            state = next_state
