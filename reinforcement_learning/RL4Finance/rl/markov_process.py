@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Callable, Generic, Iterable, Mapping, Sequence, Set, TypeVar
 
@@ -159,3 +160,58 @@ class MarkovRewardProcess(MarkovProcess[S]):
 
             yield TransitionStep(state=state, next_state=next_state, reward=reward)
             state = next_state
+
+
+StateReward = FiniteDistribution[tuple[State[S], float]]
+RewardTransition = Mapping[NonTerminal[S], StateReward[S]]
+
+
+class FiniteMarkovRewardProcess(FiniteMarkovProcess[S], MarkovRewardProcess[S]):
+    transition_reward_map: RewardTransition[S]
+    reward_function_vector: np.ndarray
+
+    def __init__(
+        self,
+        transition_reward_map: Mapping[S, FiniteDistribution[tuple[S, float]]],
+    ):
+        transition_map: dict[S, FiniteDistribution[S]] = {}
+
+        for state, distribution in transition_reward_map.items():
+            probabilities: dict[S, float] = defaultdict(float)
+
+            for (next_state, _), probability in distribution:
+                probabilities[next_state] += probability
+
+            transition_map[state] = Categorical(probabilities)
+
+        super().__init__(transition_map=transition_map)
+
+        nt: set[S] = set(transition_reward_map.keys())
+
+        self.transition_reward_map = {
+            NonTerminal(current_state): Categorical(
+                {
+                    (
+                        NonTerminal(next_state)
+                        if next_state in nt
+                        else Terminal(next_state),
+                        reward,
+                    ): probability
+                    for (next_state, reward), probability in distribution
+                }
+            )
+            for current_state, distribution in transition_reward_map.items()
+        }
+
+        self.reward_function_vector = np.array(
+            [
+                sum(
+                    probability * reward
+                    for (_, reward), probability in self.transition_reward_map[state]
+                )
+                for state in self.non_terminal_states
+            ]
+        )
+
+    def transition_reward(self, state: NonTerminal[S]) -> StateReward[S]:
+        return self.transition_reward_map[state]
