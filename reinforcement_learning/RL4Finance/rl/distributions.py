@@ -148,7 +148,11 @@ class FiniteDistribution(Distribution[A], ABC):
         outcomes = list(self.table().keys())
         weights = list(self.table().values())
 
-        return np.random.choice(outcomes, p=weights)
+        try:
+            return np.random.choice(outcomes, p=weights)
+        except:
+            idx = np.random.choice(len(outcomes), p=weights)
+            return outcomes[idx]
 
     def expectation(self, f: Callable[[A], float]) -> float:
         return sum(prob * f(outcome) for outcome, prob in self)
@@ -163,7 +167,13 @@ class FiniteDistribution(Distribution[A], ABC):
         return False
 
     def __repr__(self) -> str:
-        return repr(self.table())
+        # return repr(self.table())
+        display = ""
+
+        for state, prob in self.table().items():
+            display += f"State {state}: {prob:.3f}\n"
+
+        return display
 
 
 @dataclass(frozen=True)
