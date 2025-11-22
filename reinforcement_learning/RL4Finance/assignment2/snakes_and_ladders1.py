@@ -107,7 +107,7 @@ class SnakesAndLadders(FiniteMarkovProcess[State]):
                 # the player needs to roll the exact
                 # number in order to reach 10
                 if next_position > self.num_squares:
-                    continue
+                    next_position = current_position
 
                 # travel down the snake or the ladder
                 next_position = self.snakes.get(next_position, next_position)
