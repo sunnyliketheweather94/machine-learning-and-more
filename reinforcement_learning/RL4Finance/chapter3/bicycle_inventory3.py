@@ -101,10 +101,10 @@ class BicycleInventoryMRP(FiniteMarkovRewardProcess[Inventory]):
 
 if __name__ == "__main__":
     mrp = BicycleInventoryMRP(
-        capacity=10,
-        poisson_lambda=1.5,
-        holding_cost=70.0,
-        stockout_cost=200.0,
+        capacity=2,
+        poisson_lambda=1.0,
+        holding_cost=1.0,
+        stockout_cost=10.0,
     )
 
     # # print out the transition map
@@ -162,3 +162,18 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(Path(__file__).parent / "images" / "bicycle_mrp.png")
     plt.close()
+
+    # generate the value function (discounted accumulation
+    # of future rewards for a given state)
+    value_function = mrp.compute_value_function_vector(gamma=0.9, pprint=True)
+
+    print("===== Value Function =====")
+    for state, reward in value_function.items():
+        print(f"{state}: reward = {reward:.3f}")
+
+    # generate the reward function (expected immediate reward for a given state)
+    reward_vector = mrp.reward_function_vector
+
+    print("\n===== Reward Function =====")
+    for state, reward in zip(mrp.non_terminal_states, reward_vector):
+        print(f"{state.state}: reward = {reward:.3f}")
