@@ -189,6 +189,8 @@ class FiniteMarkovRewardProcess(FiniteMarkovProcess[S], MarkovRewardProcess[S]):
         nt: set[S] = set(transition_reward_map.keys())
 
         self.transition_reward_map = {
+            # key = current_state
+            # value = dict[tuple[next_state, reward], probability]
             NonTerminal(current_state): Categorical(
                 {
                     (
@@ -215,3 +217,23 @@ class FiniteMarkovRewardProcess(FiniteMarkovProcess[S], MarkovRewardProcess[S]):
 
     def transition_reward(self, state: NonTerminal[S]) -> StateReward[S]:
         return self.transition_reward_map[state]
+
+    def compute_value_function_vector(
+        self,
+        gamma: float,
+        pprint: bool = False,
+    ) -> dict[State[S], float] | np.ndarray:
+        value_function = np.linalg.solve(
+            np.eye(len(self.non_terminal_states))
+            - gamma * self.compute_transition_matrix(),
+            self.reward_function_vector,
+        )
+
+        if pprint:
+            return {
+                state.state: reward.item()
+                for state, reward in zip(self.non_terminal_states, value_function)
+            }
+
+        else:
+            return value_function
