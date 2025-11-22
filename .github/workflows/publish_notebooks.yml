@@ -1,0 +1,68 @@
+name: Build Jupyter Book and Commit to /docs
+
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+  # Allows manual run
+  workflow_dispatch:
+
+permissions:
+  # Read/Write permissions are required for the commit step later
+  contents: write
+
+concurrency:
+  group: "build-docs"
+  cancel-in-progress: true
+
+jobs:
+  build_and_commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⚙️ Checkout repository
+        uses: actions/checkout@v4
+        # Fetch history so we can commit later
+        with:
+          fetch-depth: 0 
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          # Install Jupyter Book and necessary libraries
+          pip install jupyter-book
+          
+      - name: 🏗️ Build the Jupyter Book
+        # Output goes into the default folder: _build/html
+        run: jupyter-book build .
+
+      - name: 🧹 Prepare /docs/projects folder (Non-destructive)
+        run: |
+          # 1. Ensure the target directory exists. 'mkdir -p' is non-destructive if it already exists.
+          mkdir -p docs/projects
+          
+          # 2. Copy the *contents* of the built Jupyter Book (_build/html/.) 
+          #    into docs/projects. This will overwrite existing book files 
+          #    but will preserve any non-book files you manually added to docs/projects.
+          #    NOTE: Files that were REMOVED from the book will still exist in docs/projects 
+          #    until you manually delete them.
+          cp -r _build/html/. docs/projects/
+          
+          # 3. Create .nojekyll in the root deployment folder to ensure proper HTML rendering
+          # This assumes GitHub Pages is set to serve from the /docs folder.
+          touch docs/.nojekyll
+
+      - name: 🚀 Commit and Push changes in /docs
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          # Only commit the contents of the /docs folder (including the updated projects subfolder)
+          commit_message: 'Automated: Update Jupyter Book in /docs/projects (Non-destructive)'
+          file_pattern: 'docs/'
+          # Ensure the action uses the GITHUB_TOKEN permissions
+          token: ${{ secrets.GITHUB_TOKEN }}
