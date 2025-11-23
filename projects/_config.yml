@@ -1,8 +1,0 @@
-title: Sunny's projects
-author: Sunny Shah
-execute:
-  execute_notebooks: force
-
-launch_buttons:
-  url: https://github.com/sunnyliketheweather94/machine-learning-and-more
-  path_to_book: ./projects
