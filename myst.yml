@@ -54,6 +54,11 @@ project:
             - title: 'Assignment 2'
               children:
                 - file: projects/reinforcement_learning/foundations/chapter3/stock_processes1.ipynb
+
+    - file: projects/resume.md
+      title: About me
+
+
 site:
   template: book-theme
   options:
