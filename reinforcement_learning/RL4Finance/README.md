@@ -1,2 +1,0 @@
-# Reinforcement Learning in Finance
-Back in grad school, I took an RL course with Prof. Ashwin Rao. I wanted to brush up my knowledge, improve my coding practices, and flex my mental muscles. So I follow the [CME 241: Foundations of Reinforcement Learning with Applications in Finance](https://cme241.github.io/) course. More specifically, I follow the exams and assignments from the [Winter 2022 course](https://github.com/coverdrive/technical-documents/tree/master/finance/cme241). The textbook can be found from the course website.
