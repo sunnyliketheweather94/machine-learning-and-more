@@ -1,0 +1,48 @@
+# See docs at: https://mystmd.org/guide/frontmatter
+version: 1
+project:
+  id: 2025a6ff-1a51-4e0c-8e1e-2fe01bfdd4ba
+  title: Machine Learning and More...
+  description:
+  keywords: []
+  authors: ["Sunny Shah"]
+  github: https://github.com/sunnyliketheweather94/machine-learning-and-more
+  # To autogenerate a Table of Contents, run "jupyter book init --write-toc"
+  toc:
+    - file: projects/index.md
+    - title: Bayesian Statistics
+      children: 
+      - title: Tutorials
+        children:
+          - file: projects/bayesian_statistics/tutorials/hf_readmissions/modeling.ipynb
+          - file: projects/bayesian_statistics/tutorials/manufacturing_efficiency/manufacturing_efficiency.ipynb
+          - file: projects/bayesian_statistics/tutorials/subscription_renewal/subscription_renewal.ipynb
+          - file: projects/bayesian_statistics/tutorials/conversion_rate.ipynb
+          - file: projects/bayesian_statistics/tutorials/flux_across_surface.ipynb
+          - file: projects/bayesian_statistics/tutorials/metropolis_hastings.ipynb
+          - file: projects/bayesian_statistics/tutorials/systolic_blood_pressure.ipynb
+          - file: projects/bayesian_statistics/tutorials/transformations_of_random_variables.ipynb
+          - file: projects/bayesian_statistics/tutorials/volume_of_cube.ipynb
+      - title: Bayesian Data Analysis
+        children:
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter2/example1.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter2/example2.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter2/exercise13.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter2/exercise21.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter3/example1.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter3/example2.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter3/exercise2.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter3/exercise8.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter3/exercise11.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter3/exercise12.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter5/example1.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter5/example2.ipynb
+          - file: projects/bayesian_statistics/bayesian_data_analysis/chapter5/exercise13.ipynb
+    - title: Reinforcement Learning
+      children:
+        - title: Foundations of Reinforcement Learning 
+site:
+  template: book-theme
+  # options:
+  #   favicon: favicon.ico
+  #   logo: site_logo.png

@@ -1,8 +1,5 @@
 ## Machine Learning and More
-This repository is for me to work through different problems faced in statistics, machine learning, and more. For example, I have the following directories:
-- [Bayesian Data Analysis](./bayesian_statistics/bayesian_data_analysis/) where I work through the textbook of the same name, authored by Gelman.
-- [Bayesian statistics tutorials](./bayesian_statistics/tutorials/) where I work through some Bayesian statistics challenges that I was unclear on, and wanted to understand more of the theory, computation, and how to explain the results to a stakeholder.
-<!-- - [Reinforcement Learning](./reinforcement_learning/) where I work on problems like how to set up a Markov reward/decision process, set up RL algorithms from scratch, model different problems in life (like Snakes and Ladders, the Frog Puzzle, studying the inventory dynamics of a small bicycle store, etc.). I wanted to strengthen my knowledge of numerical methods, quantitative modeling, and RL. -->
+This repository is for me to work through my foundations of statistics, mathematics, probability, machine learning, numerical methods, and more.
 
 
 ## ⚙️ Setting Up Your Environment
