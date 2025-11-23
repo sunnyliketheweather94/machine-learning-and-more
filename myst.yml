@@ -10,6 +10,7 @@ project:
   # To autogenerate a Table of Contents, run "jupyter book init --write-toc"
   toc:
     - file: projects/index.md
+
     - title: Bayesian Statistics
       children: 
       - title: Tutorials
@@ -39,8 +40,13 @@ project:
           - file: projects/bayesian_statistics/bayesian_data_analysis/chapter5/example2.ipynb
           - file: projects/bayesian_statistics/bayesian_data_analysis/chapter5/exercise13.ipynb
     - title: Reinforcement Learning
-      children:
-        - title: Foundations of Reinforcement Learning 
+      # children:
+        # - title: Foundations of Reinforcement Learning 
+
+    - file: projects/resume.md
+      title: About me
+
+
 site:
   template: book-theme
   # options:
