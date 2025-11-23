@@ -24,6 +24,7 @@ project:
           - file: projects/bayesian_statistics/tutorials/systolic_blood_pressure.ipynb
           - file: projects/bayesian_statistics/tutorials/transformations_of_random_variables.ipynb
           - file: projects/bayesian_statistics/tutorials/volume_of_cube.ipynb
+
       - title: Bayesian Data Analysis
         children:
           - file: projects/bayesian_statistics/bayesian_data_analysis/chapter2/example1.ipynb
@@ -39,9 +40,26 @@ project:
           - file: projects/bayesian_statistics/bayesian_data_analysis/chapter5/example1.ipynb
           - file: projects/bayesian_statistics/bayesian_data_analysis/chapter5/example2.ipynb
           - file: projects/bayesian_statistics/bayesian_data_analysis/chapter5/exercise13.ipynb
+
     - title: Reinforcement Learning
-      # children:
-        # - title: Foundations of Reinforcement Learning 
+      children:
+        - title: Foundations of Reinforcement Learning
+          children:
+            - title: 'Chapter 3: Markov Processes'
+              children:
+                - file: projects/reinforcement_learning/foundations/chapter3/stock_processes1.ipynb
+                - file: projects/reinforcement_learning/foundations/chapter3/stock_processes2.ipynb
+                - file: projects/reinforcement_learning/foundations/chapter3/stock_processes3.ipynb
+                - file: projects/reinforcement_learning/foundations/chapter3/bicycle_inventory1.ipynb
+                - file: projects/reinforcement_learning/foundations/chapter3/bicycle_inventory2.ipynb
+                - file: projects/reinforcement_learning/foundations/chapter3/bicycle_inventory3.ipynb
+
+            - title: 'Assignment 2'
+              children:
+                - file: projects/reinforcement_learning/foundations/chapter3/stock_processes1.ipynb
+                - file: projects/reinforcement_learning/foundations/assignment2/snakes_and_ladders1.ipynb
+                - file: projects/reinforcement_learning/foundations/assignment2/snakes_and_ladders2.ipynb
+                - file: projects/reinforcement_learning/foundations/assignment2/frog_puzzle.ipynb
 
     - file: projects/resume.md
       title: About me
@@ -49,6 +67,6 @@ project:
 
 site:
   template: book-theme
-  # options:
-  #   favicon: favicon.ico
-  #   logo: site_logo.png
+  options:
+    favicon: imgs/logo.png
+    logo: imgs/logo.png
