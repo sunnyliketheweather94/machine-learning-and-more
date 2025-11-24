@@ -1,0 +1,1 @@
+I will follow [MS&E 211](https://web.stanford.edu/class/msande211x/index.shtml)'s Introduction to Optimization course.
