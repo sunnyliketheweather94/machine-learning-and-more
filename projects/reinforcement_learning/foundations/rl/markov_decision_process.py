@@ -35,9 +35,7 @@ class TransitionStep(Generic[STATE, ACTION]):
     next_state: State[STATE]
     reward: float
 
-    def add_return(
-        self, discount_factor: float, total_return: float
-    ) -> ReturnStep[STATE, ACTION]:
+    def add_return(self, discount_factor: float, total_return: float):
         return ReturnStep(
             state=self.state,
             next_state=self.next_state,
@@ -63,6 +61,7 @@ class MarkovDecisionProcess(ABC, Generic[STATE, ACTION]):
         state: NonTerminal[STATE],
         action: ACTION,
     ) -> Distribution[tuple[State[STATE], float]]:
+        """given state and action, return a distribution of (next state, reward)"""
         pass
 
     def apply_policy(self, policy: Policy[STATE, ACTION]) -> MarkovRewardProcess[STATE]:
