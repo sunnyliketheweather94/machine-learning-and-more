@@ -38,6 +38,14 @@ def almost_equal_numpy_arrays(
     return max(abs(left - right)) < tolerance
 
 
+def almost_equal_dictionaries(
+    left: VALUE_FUNCTION,
+    right: VALUE_FUNCTION,
+    tolerance: float = DEFAULT_TOLERANCE,
+) -> bool:
+    return max(abs(left[state] - right[state]) for state in left) < tolerance
+
+
 def greedy_policy_from_vf(
     mdp: FiniteMarkovDecisionProcess[STATE, ACTION],
     vf: VALUE_FUNCTION[STATE],
@@ -50,8 +58,8 @@ def greedy_policy_from_vf(
             (
                 action,
                 mdp.mapping[state][action].expectation(
-                    lambda next_state, reward: reward
-                    + gamma * extended_vf(v=vf, s=next_state)
+                    lambda next_state_reward: next_state_reward[1]
+                    + gamma * extended_vf(v=vf, s=next_state_reward[0])
                 ),
             )
             for action in mdp.actions(state)
