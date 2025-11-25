@@ -69,6 +69,8 @@ project:
             - title: 'Dynamic Programming Algorithms'
               children:
               - file: projects/reinforcement_learning/foundations/chapter5/cosine_fixed_point.ipynb
+              - file: projects/reinforcement_learning/foundations/chapter5/inventory_with_capacity_constraints.ipynb
+              - file: projects/reinforcement_learning/foundations/chapter5/dynamic_pricing.ipynb
 
     - file: projects/resume.md
       title: About me
