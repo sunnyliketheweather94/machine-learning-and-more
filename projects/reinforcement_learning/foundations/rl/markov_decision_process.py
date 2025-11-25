@@ -11,7 +11,7 @@ from rl.markov_process import (
     NonTerminal,
     StateReward,
 )
-from rl.policy import Policy
+from rl.policy import FinitePolicy, Policy
 from rl.states import NonTerminal, State, Terminal
 
 
@@ -85,3 +85,82 @@ class MarkovDecisionProcess(ABC, Generic[STATE, ACTION]):
             )
 
             state = next_state
+
+
+# {state -> {action -> {(next_state, reward) : probability}}}
+ActionMapping = dict[ACTION, StateReward[STATE]]
+StateActionMapping = dict[NonTerminal[STATE], ActionMapping[ACTION, STATE]]
+
+
+class FiniteMarkovDecisionProcess(MarkovDecisionProcess[STATE, ACTION]):
+    mapping: StateActionMapping[STATE, ACTION]
+    non_terminal_states: list[NonTerminal[STATE]]
+
+    def __init__(
+        self,
+        mapping: dict[STATE, dict[ACTION, FiniteDistribution[tuple[STATE, float]]]],
+    ):
+        non_terminals: set[STATE] = set(mapping.keys())
+        self.mapping = {
+            NonTerminal(state): {
+                action: Categorical(
+                    {
+                        (
+                            NonTerminal(next_state)
+                            if next_state in non_terminals
+                            else Terminal(next_state),
+                            reward,
+                        ): prob
+                        for (next_state, reward), prob in next_state_reward_dist
+                    }
+                )
+                for action, next_state_reward_dist in action_next_state_reward_mapping.items()
+            }
+            for state, action_next_state_reward_mapping in mapping.items()
+        }
+
+        self.non_terminal_states = list(self.mapping.keys())
+
+    def __repr__(self) -> str:
+        display = ""
+
+        for state, action_next_state_reward_mapping in self.mapping.items():
+            display += f"From State {state.state}:\n"
+            for (
+                action,
+                next_state_reward_dist,
+            ) in action_next_state_reward_mapping.items():
+                display += f"  With Action {action}:\n"
+                for (next_state, reward), prob in next_state_reward_dist:
+                    optional = "Terminal " if isinstance(next_state, Terminal) else ""
+                    display += f"    To [{optional}State {next_state.state}"
+                    display += f" and Reward {reward:.3f}] "
+                    display += f"with Probability {prob:.3f}"
+
+        return display
+
+    def step(self, state: NonTerminal[STATE], action: ACTION) -> StateReward[STATE]:
+        action_map: ActionMapping[ACTION, STATE] = self.mapping[state]
+        return action_map[action]
+
+    def actions(self, state: NonTerminal[STATE]) -> Iterable[ACTION]:
+        return self.mapping[state].keys()
+
+    def apply_finite_policy(
+        self, policy: FinitePolicy[STATE, ACTION]
+    ) -> FiniteMarkovRewardProcess[STATE]:
+        transition_mapping: dict[STATE, FiniteDistribution[tuple[STATE, float]]] = (
+            dict()
+        )
+
+        for state in self.mapping:
+            action_map: ActionMapping[STATE, ACTION] = self.mapping[state]
+            outcomes: dict[tuple[STATE, float], float] = defaultdict(float)
+            actions: FiniteDistribution[ACTION] = policy.act(state)
+            for action, prob_action in actions:
+                for (next_state, reward), prob in action_map[action]:
+                    outcomes[(next_state.state, reward)] += prob_action * prob
+
+            transition_mapping[state.state] = Categorical(outcomes)
+
+        return FiniteMarkovRewardProcess(transition_mapping)
