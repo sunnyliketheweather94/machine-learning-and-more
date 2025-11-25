@@ -1,40 +1,18 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Callable, Generic, Iterable, Mapping, Sequence, Set, TypeVar
+from typing import Generic, Iterable, Mapping, Sequence, Set
 
 import numpy as np
 
+from rl.constants import STATE
 from rl.distributions import (
     Categorical,
     Distribution,
     FiniteDistribution,
     SampledDistribution,
 )
-
-STATE = TypeVar("State")
-X = TypeVar("X")
-
-
-class State(ABC, Generic[STATE]):
-    state: STATE
-
-    def on_on_terminal(self, f: Callable, default: X) -> X:
-        """f takes a "NonTerminal[STATE]" arg and returns X"""
-        if isinstance(self, NonTerminal):
-            return f(self)
-
-        return default
-
-
-@dataclass(frozen=True)
-class Terminal(State[STATE]):
-    state: STATE
-
-
-@dataclass(frozen=True)
-class NonTerminal(State[STATE]):
-    state: STATE
+from rl.states import NonTerminal, State, Terminal
 
 
 class MarkovProcess(ABC, Generic[STATE]):

@@ -1,31 +1,18 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import (
-    DefaultDict,
-    Dict,
-    Generic,
-    Iterable,
-    Mapping,
-    Sequence,
-    Set,
-    Tuple,
-    TypeVar,
-)
+from typing import DefaultDict, Dict, Generic, Iterable, Mapping, Sequence, Set, Tuple
 
+from rl.constants import ACTION, STATE
 from rl.distributions import Categorical, Distribution, FiniteDistribution
 from rl.markov_process import (
     FiniteMarkovRewardProcess,
     MarkovRewardProcess,
     NonTerminal,
-    State,
     StateReward,
-    Terminal,
 )
 from rl.policy import Policy
-
-ACTION = TypeVar("Action")
-STATE = TypeVar("State")
+from rl.states import NonTerminal, State, Terminal
 
 
 @dataclass(frozen=True)
