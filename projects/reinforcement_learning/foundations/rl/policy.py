@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, Generic, Iterable, TypeVar
 
-from rl.distributions import Choose, Constant, Distribution
+from rl.distributions import Choose, Constant, Distribution, FiniteDistribution
 from rl.markov_process import NonTerminal
 
 ACTION = TypeVar("Action")  # denotes an action
@@ -46,3 +46,40 @@ class Always(DeterministicPolicy[STATE, ACTION]):
     def __init__(self, action: ACTION):
         self.action = action
         super().__init__(action_for=lambda _: action)
+
+
+@dataclass(frozen=True)
+class FinitePolicy(Policy[STATE, ACTION]):
+    policy_map: dict[STATE, FiniteDistribution[ACTION]]
+
+    def __repr__(self) -> str:
+        display = ""
+        for state, action_dist in self.policy_map.items():
+            display += f"For State {state}:\n"
+            for action, prob in action_dist:
+                display += f"  Do Action {action} "
+                display += f"with Probability {prob:.3f}\n"
+
+        return display
+
+    def act(self, state: NonTerminal[STATE]) -> FiniteDistribution[ACTION]:
+        return self.policy_map[state.state]
+
+
+class FiniteDeterministicPolicy(FinitePolicy[STATE, ACTION]):
+    action_for: dict[STATE, ACTION]
+
+    def __init__(self, action_for: dict[STATE, ACTION]):
+        self.action_for = action_for
+        super().__init__(
+            policy_map={
+                state: Constant(action) for state, action in self.action_for.items()
+            }
+        )
+
+    def __repr__(self) -> str:
+        display = ""
+        for state, action in self.action_for.items():
+            display += f"For State {state}: Do Action {action}\n"
+
+        return display
