@@ -65,6 +65,10 @@ project:
               children:
                 - file: projects/reinforcement_learning/foundations/chapter4/inventory_no_cap.ipynb
                 - file: projects/reinforcement_learning/foundations/chapter4/inventory_cap.ipynb
+            
+            - title: 'Dynamic Programming Algorithms'
+              children:
+              - file: projects/reinforcement_learning/foundations/chapter5/cosine_fixed_point.ipynb
 
     - file: projects/resume.md
       title: About me
