@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from typing import Callable, Generic, Iterable, Iterator, Mapping, Sequence, TypeVar
+from typing import Callable, Generic, Iterable, Iterator, Mapping, Sequence
 
 import numpy as np
 
-A = TypeVar("A")
-B = TypeVar("B")
+from rl.constants import A, B
 
 
 class Distribution(ABC, Generic[A]):
