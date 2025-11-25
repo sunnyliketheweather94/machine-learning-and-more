@@ -1,52 +1,30 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Callable, Generic, Iterable, Mapping, Sequence, Set, TypeVar
+from typing import Generic, Iterable, Mapping, Sequence, Set
 
 import numpy as np
 
+from rl.constants import STATE
 from rl.distributions import (
     Categorical,
     Distribution,
     FiniteDistribution,
     SampledDistribution,
 )
-
-S = TypeVar("S")
-X = TypeVar("X")
+from rl.states import NonTerminal, State, Terminal
 
 
-class State(ABC, Generic[S]):
-    state: S
-
-    def on_on_terminal(self, f: Callable, default: X) -> X:
-        """f takes a "NonTerminal[S]" arg and returns X"""
-        if isinstance(self, NonTerminal):
-            return f(self)
-
-        return default
-
-
-@dataclass(frozen=True)
-class Terminal(State[S]):
-    state: S
-
-
-@dataclass(frozen=True)
-class NonTerminal(State[S]):
-    state: S
-
-
-class MarkovProcess(ABC, Generic[S]):
+class MarkovProcess(ABC, Generic[STATE]):
     @abstractmethod
-    def transition(self, state: NonTerminal[S]) -> Distribution[State[S]]:
+    def transition(self, state: NonTerminal[STATE]) -> Distribution[State[STATE]]:
         pass
 
     def simulate(
         self,
-        start_state_distribution: Distribution[NonTerminal[S]],
-    ) -> Iterable[State[S]]:
-        state: State[S] = start_state_distribution.sample()
+        start_state_distribution: Distribution[NonTerminal[STATE]],
+    ) -> Iterable[State[STATE]]:
+        state: State[STATE] = start_state_distribution.sample()
         yield state
 
         while isinstance(state, NonTerminal):
@@ -54,15 +32,15 @@ class MarkovProcess(ABC, Generic[S]):
             yield state
 
 
-Transition = Mapping[NonTerminal[S], FiniteDistribution[State[S]]]
+Transition = Mapping[NonTerminal[STATE], FiniteDistribution[State[STATE]]]
 
 
-class FiniteMarkovProcess(MarkovProcess[S]):
-    non_terminal_states: Sequence[NonTerminal[S]]
-    transition_map: Transition[S]
+class FiniteMarkovProcess(MarkovProcess[STATE]):
+    non_terminal_states: Sequence[NonTerminal[STATE]]
+    transition_map: Transition[STATE]
 
-    def __init__(self, transition_map: Mapping[S, FiniteDistribution[S]]):
-        non_terminals: Set[S] = set(transition_map.keys())
+    def __init__(self, transition_map: Mapping[STATE, FiniteDistribution[STATE]]):
+        non_terminals: Set[STATE] = set(transition_map.keys())
 
         self.transition_map = {
             NonTerminal(state=source_state): Categorical(
@@ -93,7 +71,7 @@ class FiniteMarkovProcess(MarkovProcess[S]):
 
         return display
 
-    def transition(self, state: NonTerminal[S]) -> FiniteDistribution[State[S]]:
+    def transition(self, state: NonTerminal[STATE]) -> FiniteDistribution[State[STATE]]:
         return self.transition_map[state]
 
     def compute_transition_matrix(self) -> np.ndarray:
@@ -108,7 +86,7 @@ class FiniteMarkovProcess(MarkovProcess[S]):
 
         return trans_matrix
 
-    def compute_stationary_distribution(self) -> FiniteDistribution[S]:
+    def compute_stationary_distribution(self) -> FiniteDistribution[STATE]:
         eigen_vals, eigen_vecs = np.linalg.eig(self.compute_transition_matrix().T)
         index_of_unit_eigenvalue = np.argmin(np.abs(eigen_vals - 1))
         unit_eigenvector = eigen_vecs[:, index_of_unit_eigenvalue].real
@@ -122,25 +100,25 @@ class FiniteMarkovProcess(MarkovProcess[S]):
 
 
 @dataclass(frozen=True)
-class TransitionStep(Generic[S]):
-    state: NonTerminal[S]
-    next_state: State[S]
+class TransitionStep(Generic[STATE]):
+    state: NonTerminal[STATE]
+    next_state: State[STATE]
     reward: float
 
 
-class MarkovRewardProcess(MarkovProcess[S]):
+class MarkovRewardProcess(MarkovProcess[STATE]):
     @abstractmethod
     def transition_reward(
         self,
-        state: NonTerminal[S],
-    ) -> Distribution[tuple[State[S], float]]:
+        state: NonTerminal[STATE],
+    ) -> Distribution[tuple[State[STATE], float]]:
         pass
 
-    def transition(self, state: NonTerminal[S]) -> Distribution[State[S]]:
+    def transition(self, state: NonTerminal[STATE]) -> Distribution[State[STATE]]:
         distribution = self.transition_reward(state=state)
 
         def sample_next_state(
-            distribution: Distribution[tuple[State[S], float]] = distribution,
+            distribution: Distribution[tuple[State[STATE], float]] = distribution,
         ):
             next_state, _ = distribution.sample()
             return next_state
@@ -149,9 +127,9 @@ class MarkovRewardProcess(MarkovProcess[S]):
 
     def simulate_reward(
         self,
-        start_state_distribution: Distribution[NonTerminal[S]],
-    ) -> Iterable[TransitionStep[S]]:
-        state: State[S] = start_state_distribution.sample()
+        start_state_distribution: Distribution[NonTerminal[STATE]],
+    ) -> Iterable[TransitionStep[STATE]]:
+        state: State[STATE] = start_state_distribution.sample()
         reward: float = 0.0
 
         while isinstance(state, NonTerminal):
@@ -162,22 +140,22 @@ class MarkovRewardProcess(MarkovProcess[S]):
             state = next_state
 
 
-StateReward = FiniteDistribution[tuple[State[S], float]]
-RewardTransition = Mapping[NonTerminal[S], StateReward[S]]
+StateReward = FiniteDistribution[tuple[State[STATE], float]]
+RewardTransition = Mapping[NonTerminal[STATE], StateReward[STATE]]
 
 
-class FiniteMarkovRewardProcess(FiniteMarkovProcess[S], MarkovRewardProcess[S]):
-    transition_reward_map: RewardTransition[S]
+class FiniteMarkovRewardProcess(FiniteMarkovProcess[STATE], MarkovRewardProcess[STATE]):
+    transition_reward_map: RewardTransition[STATE]
     reward_function_vector: np.ndarray
 
     def __init__(
         self,
-        transition_reward_map: Mapping[S, FiniteDistribution[tuple[S, float]]],
+        transition_reward_map: Mapping[STATE, FiniteDistribution[tuple[STATE, float]]],
     ):
-        transition_map: dict[S, FiniteDistribution[S]] = {}
+        transition_map: dict[STATE, FiniteDistribution[STATE]] = {}
 
         for state, distribution in transition_reward_map.items():
-            probabilities: dict[S, float] = defaultdict(float)
+            probabilities: dict[STATE, float] = defaultdict(float)
 
             for (next_state, _), probability in distribution:
                 probabilities[next_state] += probability
@@ -186,7 +164,7 @@ class FiniteMarkovRewardProcess(FiniteMarkovProcess[S], MarkovRewardProcess[S]):
 
         super().__init__(transition_map=transition_map)
 
-        nt: set[S] = set(transition_reward_map.keys())
+        nt: set[STATE] = set(transition_reward_map.keys())
 
         self.transition_reward_map = {
             # key = current_state
@@ -215,14 +193,14 @@ class FiniteMarkovRewardProcess(FiniteMarkovProcess[S], MarkovRewardProcess[S]):
             ]
         )
 
-    def transition_reward(self, state: NonTerminal[S]) -> StateReward[S]:
+    def transition_reward(self, state: NonTerminal[STATE]) -> StateReward[STATE]:
         return self.transition_reward_map[state]
 
     def compute_value_function_vector(
         self,
         gamma: float,
         pprint: bool = False,
-    ) -> dict[State[S], float] | np.ndarray:
+    ) -> dict[State[STATE], float] | np.ndarray:
         value_function = np.linalg.solve(
             np.eye(len(self.non_terminal_states))
             - gamma * self.compute_transition_matrix(),
