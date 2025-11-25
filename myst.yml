@@ -60,6 +60,11 @@ project:
                 - file: projects/reinforcement_learning/foundations/assignment2/snakes_and_ladders1.ipynb
                 - file: projects/reinforcement_learning/foundations/assignment2/snakes_and_ladders2.ipynb
                 - file: projects/reinforcement_learning/foundations/assignment2/frog_puzzle.ipynb
+            
+            - title: 'Chapter 4: Markov Decision Processes'
+              children:
+                - file: projects/reinforcement_learning/foundations/chapter4/inventory_no_cap.ipynb
+                - file: projects/reinforcement_learning/foundations/chapter4/inventory_cap.ipynb
 
     - file: projects/resume.md
       title: About me
