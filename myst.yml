@@ -66,6 +66,10 @@ project:
                 - file: projects/reinforcement_learning/foundations/chapter4/inventory_no_cap.ipynb
                 - file: projects/reinforcement_learning/foundations/chapter4/inventory_cap.ipynb
             
+            - title: 'Assignment 3'
+              children:
+                - file: projects/reinforcement_learning/foundations/assignment3/frog_croaking_puzzle.ipynb
+            
             - title: 'Dynamic Programming Algorithms'
               children:
               - file: projects/reinforcement_learning/foundations/chapter5/cosine_fixed_point.ipynb
