@@ -193,7 +193,7 @@ def calculate_optimal_vf_and_policies(
                     sr_dist.expectation(
                         lambda s_r: s_r[1]
                         + gamma
-                        * (extended_vf(v=v_p[-1], s=s_r[0]) if len(v_p) > 0 else 0.0)
+                        * (extended_vf(v=v_p[-1][0], s=s_r[0]) if len(v_p) > 0 else 0.0)
                     ),
                     action,
                 )
