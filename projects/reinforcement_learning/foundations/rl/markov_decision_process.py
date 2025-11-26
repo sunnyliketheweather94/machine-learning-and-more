@@ -135,7 +135,7 @@ class FiniteMarkovDecisionProcess(MarkovDecisionProcess[STATE, ACTION]):
                     optional = "Terminal " if isinstance(next_state, Terminal) else ""
                     display += f"    To [{optional}State {next_state.state}"
                     display += f" and Reward {reward:.3f}] "
-                    display += f"with Probability {prob:.3f}"
+                    display += f"with Probability {prob:.3f}\n"
 
         return display
 
