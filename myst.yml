@@ -60,6 +60,17 @@ project:
                 - file: projects/reinforcement_learning/foundations/assignment2/snakes_and_ladders1.ipynb
                 - file: projects/reinforcement_learning/foundations/assignment2/snakes_and_ladders2.ipynb
                 - file: projects/reinforcement_learning/foundations/assignment2/frog_puzzle.ipynb
+            
+            - title: 'Chapter 4: Markov Decision Processes'
+              children:
+                - file: projects/reinforcement_learning/foundations/chapter4/inventory_no_cap.ipynb
+                - file: projects/reinforcement_learning/foundations/chapter4/inventory_cap.ipynb
+            
+            - title: 'Dynamic Programming Algorithms'
+              children:
+              - file: projects/reinforcement_learning/foundations/chapter5/cosine_fixed_point.ipynb
+              - file: projects/reinforcement_learning/foundations/chapter5/inventory_with_capacity_constraints.ipynb
+              - file: projects/reinforcement_learning/foundations/chapter5/dynamic_pricing.ipynb
 
     - file: projects/resume.md
       title: About me
