@@ -76,6 +76,10 @@ project:
               - file: projects/reinforcement_learning/foundations/chapter5/inventory_with_capacity_constraints.ipynb
               - file: projects/reinforcement_learning/foundations/chapter5/dynamic_pricing.ipynb
 
+            - title: 'Assignment 4'
+              children:
+                - file: projects/reinforcement_learning/foundations/assignment4/utility_maximization.ipynb
+
     - file: projects/resume.md
       title: About me
 
